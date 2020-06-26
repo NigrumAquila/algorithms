@@ -1,0 +1,156 @@
+findPointsOnX:
+main>>
+EllipticCurve::Point points[2];
+ec.findPointsOnX(16, points);
+
+cpp>>
+void EllipticCurve::findPointsOnX(__int64 x, Point (&points)[2])
+{
+	__int64 left = static_cast<int>((pow(x, 3)) + (unsigned __int64)this->m_a * x + this->m_b) % this->m_p;
+	points[0].m_x = x, points[1].m_x = x;
+	points[0].m_y = this->sqrtModP(left);
+	points[1].m_y = this->reflect(points[0]).m_y;
+}
+
+header>>
+void findPointsOnX(__int64 x, Point (&points)[2]);
+
+
+------------------------------------------------------------
+getParams:
+main>>
+__int64* params = ec.getParams();
+cout << "params: a = " << params[0] << "; b = " << params[1] << "; q = " << params[2] << ';' << endl;
+cout << ec.getParams()[0];
+
+map<char, __int64> params = ec.getParams();
+cout << "params: a = " << params.find('a')->second << "; b = " << params.find('b')->second << "; q = " << params.find('p')->second << ';' << endl;
+
+header>>
+__int64* getParams();
+
+std::map<char, __int64> getParams();
+
+cpp>>
+__int64* EllipticCurve::getParams()
+{
+	__int64* params = new __int64[3];
+	params[0] = this->m_a;
+	params[1] = this->m_b;
+	params[2] = this->m_p;
+	return params;
+}
+
+std::map<char, __int64> EllipticCurve::getParams()
+{
+	std::map<char, __int64> params;
+	params.insert(std::pair<char, __int64>('a', this->m_a));
+	params.insert(std::pair<char, __int64>('b', this->m_b));
+	params.insert(std::pair<char, __int64>('p', this->m_p));
+	return params;
+}
+
+------------------------------------------------------------
+Point:
+main operators>>
+EllipticCurve::Point operator+(const EllipticCurve::Point& lhs, const EllipticCurve::Point& rhs)
+EllipticCurve::Point operator*(const EllipticCurve::Point& point, __int64 n)
+
+header operators>>
+friend Point operator+(const Point& lhs, const Point& rhs);
+friend Point operator*(const Point& point, __int64 n);
+
+
+addiction:
+__int64 computeY = (left * (lhs.m_x - computeX) - lhs.m_y) % this->m_p;
+
+
+read file:
+
+/*ifstream in("data/png.png",ios::binary);
+
+    vector<unsigned short> res;
+    short x;
+
+    while(in.read(reinterpret_cast<char*>(&x), sizeof(x)))
+        res.push_back(x);
+    for(int i = 0; i < 300; i++)
+        cout << res[i] << endl;*/
+
+
+
+
+asserts:
+    assert(("message", 2 + 2 == 4));
+
+
+
+
+
+inverse:
+
+__int64 EllipticCurve::modInverse(__int64 n)
+{
+	int m0 = this->m_p;
+	int y = 0, x = 1;
+
+	if (this->m_p == 1)
+		return 0;
+
+	while (n > 1)
+	{ 
+		int q = n / this->m_p;
+		int t = this->m_p;
+
+		this->m_p = n % this->m_p, n = t;
+		t = y;
+
+		y = x - q * y;
+		x = t;
+	}
+
+	if (x < 0)
+		x += m0;
+
+	return x;
+}
+
+__int64 EllipticCurve::modInverse(__int64 a)
+{
+	__int64 x, y;
+	__int64 g = EllipticCurve::gcdExtended(a, this->m_p, &x, &y);
+	if (g != 1)
+		return 100;
+	else
+	{
+		__int64 res = (x % this->m_p + this->m_p) % this->m_p;
+		return res;
+	}
+}
+
+__int64 EllipticCurve::gcdExtended(__int64 a, __int64 b, __int64* x, __int64* y)
+{
+	if (a == 0)
+	{
+		*x = 0, * y = 1;
+		return b;
+	}
+
+	__int64 x1, y1;
+	__int64 gcd = EllipticCurve::gcdExtended(b % a, a, &x1, &y1);
+
+	*x = y1 - (b / a) * x1;
+	*y = x1;
+	return gcd;
+}
+
+
+
+
+ECDH:
+cpp>>
+	__int64* signature = new __int64[2];
+	signature[0] = this->ec.multiply(this->generator, random).m_x;
+	signature[0] = this->ec.multiply(this->generator, random).m_x % this->p;
+	signature[1] = this->ec.modInverse(random) * (hash + signature[0] * privateKey) % this->p;
+	return signature;
